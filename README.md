@@ -16,6 +16,3 @@ A custom-built financial management tool for **SkiLuxe New Gudauri**. This appli
 * **Frontend:** HTML5, CSS3, Chart.js
 * **Backend:** Python (SimpleHTTPServer)
 * **Database:** CSV (Local Storage)
-
-### ⚠️ Note
-This project contains logic and frontend code. Private financial data (`data.csv`) is excluded from this repository for security.
