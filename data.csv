@@ -64,7 +64,6 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1770490473013,2026-02-06,F2-419,Income,Rent,320,0,320,,Tinkoff,Direct
 1770490624437,2026-02-06,Uri,Payout,Payout,160,0,-160,,-,-
 1770493154338,2026-02-15,F2-227,Income,Rent,400,0,400,,Tinkoff,Direct
-1770493168638,2026-02-07,Uri,Payout,Payout,200,0,-200,,-,-
 1770498435404,2026-02-09,F2-227,Income,Rent,2049.16,49.17984,1999.9801599999998,6831553744,POS,Booking.com
 1770498505358,2026-02-28,F2-227,Income,Rent,3271.87,78.52488,3193.34512,5012038668,POS,Booking.com
 1770498573747,2026-02-14,F2-419,Income,Rent,1823.9,43.7736,1780.1264,5616361296,POS,Booking.com
@@ -93,3 +92,10 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1771663501880,2026-02-08,F2-227,Income,Rent,50,1.5,48.5,cleaning,Online,Direct
 1771663567872,2026-02-27,F2-227,Income,Rent,441.28,10.59072,430.68928,6369952784,POS,Booking.com
 1771663637047,2026-03-10,F2-227,Income,Rent,1814.14,43.53936,1770.60064,5087511097,POS,Booking.com
+1771666766875-4f6oqjb72,2026-03-16,Loft2-518,Income,Rent,1382,33.168,1348.832,5432343356,POS,Booking.com
+1771667331008-d9fvngslj1u,2026-03-17,F2-227,Income,Rent,222,0,222,260 ils,Bank,Direct
+1771667344908-edxewfuix3p,2026-03-17,Uri,Payout,Payout,111,0,-111,130 ils,-,-
+1771667453192-gn27zmad63,2026-03-08,F2-419,Income,Rent,104,0,104,120 ils,Bank,Direct
+1771667463358-ezxdrdegz8,2026-03-08,Uri,Payout,Payout,52,0,-52,60 ils,-,-
+1771667565141-a4id4gttmob,2026-03-18,F2-419,Income,Rent,1030,0,1030,1200 ils,Bank,Direct
+1771667575337-wafcra7k3re,2026-03-18,Uri,Payout,Payout,515,0,-515,600 ils,-,-
