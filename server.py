@@ -116,6 +116,25 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(b'{"status": "deleted"}')
 
+        elif self.path == '/update':
+            data = json.loads(post_data.decode('utf-8'))
+            target_id = str(data.get('id', ''))
+            rows = []
+            if os.path.exists(DATA_FILE):
+                with open(DATA_FILE, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    for row in reader:
+                        if str(row['id']) == target_id:
+                            row = {k: data.get(k, row.get(k, '-')) for k in FIELDS}
+                        rows.append(row)
+            with open(DATA_FILE, 'w', newline='', encoding='utf-8') as f:
+                writer = csv.DictWriter(f, fieldnames=FIELDS)
+                writer.writeheader()
+                writer.writerows(rows)
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b'{"status": "updated"}')
+
         elif self.path == '/reset':
             with open(DATA_FILE, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.DictWriter(f, fieldnames=FIELDS)
@@ -128,5 +147,10 @@ class RequestHandler(http.server.SimpleHTTPRequestHandler):
 # Run migration check on startup
 migrate_csv_if_needed()
 
+
+class ReuseHTTPServer(http.server.HTTPServer):
+    allow_reuse_address = True
+
+
 print(f"✅ Dashboard running at http://localhost:{PORT}")
-http.server.HTTPServer(('', PORT), RequestHandler).serve_forever()
+ReuseHTTPServer(('', PORT), RequestHandler).serve_forever()

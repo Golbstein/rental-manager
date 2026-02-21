@@ -64,9 +64,45 @@
 
         /* Uri Row Highlighting */
         .uri-row { background-color: #f0fdf4; font-weight: bold; }
+
+        /* Loading & toasts */
+        .main-wrap { display: flex; flex: 1; flex-direction: column; overflow: hidden; }
+        .loading-overlay { position: absolute; inset: 0; background: var(--bg); display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .loading-overlay.hidden { display: none; }
+        .loading-spinner { width: 40px; height: 40px; border: 3px solid #e5e7eb; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .load-error { color: #dc2626; text-align: center; padding: 20px; }
+        #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 10px 20px; border-radius: 8px; background: #111827; color: white; font-size: 0.875rem; z-index: 100; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+        #toast.show { opacity: 1; }
+        #toast.error { background: #dc2626; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .hidden { display: none !important; }
+        body.dark { --primary: #3b82f6; --bg: #111827; --card: #1f2937; --text: #f3f4f6; }
+        body.dark .sidebar { border-right-color: #374151; }
+        body.dark .card { box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        body.dark .filters { background: var(--card); }
+        body.dark .data-table th { background: #374151; }
+        body.dark .total-row { background: #374151; border-bottom-color: #4b5563; }
+        body.dark input, body.dark select { border-color: #4b5563; background: #111827; color: #f3f4f6; }
+        .theme-toggle { margin-left: 8px; padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; border: 1px solid #d1d5db; background: var(--card); cursor: pointer; }
+        body.dark .theme-toggle { border-color: #4b5563; }
+        @media (max-width: 1024px) {
+            body { flex-direction: column; height: auto; min-height: 100vh; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e5e7eb; max-height: 70vh; overflow-y: auto; }
+            .main-wrap { flex: 1; }
+            .kpi-row { grid-template-columns: repeat(2, 1fr); }
+            .chart-grid { grid-template-columns: 1fr; }
+            .top-bar { flex-wrap: wrap; gap: 10px; }
+            .filters { flex-wrap: wrap; }
+        }
+        @media (max-width: 600px) {
+            .kpi-row { grid-template-columns: 1fr; }
+            .kpi-row[style*="repeat(3)"] { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
+
+    <div id="toast" role="status" aria-live="polite"></div>
 
     <div class="sidebar">
         <div class="logo-container">
@@ -150,15 +186,27 @@
                 <label>Description</label>
                 <input type="text" id="desc">
             </div>
-            <button type="submit" class="btn-primary">Save Transaction</button>
+            <div class="form-group" id="amountError" style="display:none;"><span style="color:#dc2626; font-size:0.875rem;">Amount must be greater than 0.</span></div>
+            <button type="submit" class="btn-primary" id="submitTransBtn">Save Transaction</button>
         </form>
 
         <div style="margin-top:auto">
-            <button onclick="resetData()" class="btn-danger">⚠️ Reset All Data</button>
+            <button onclick="resetData()" class="btn-danger" id="resetBtn">⚠️ Reset All Data</button>
+            <div id="resetConfirm" class="hidden" style="margin-top:10px;">
+                <p style="font-size:0.8rem; color:#6b7280; margin-bottom:6px;">Type <strong>RESET</strong> to confirm:</p>
+                <input type="text" id="resetTypeInput" placeholder="RESET" style="margin-bottom:6px;">
+                <button type="button" class="btn-danger" id="resetConfirmBtn" style="margin-top:0;">Permanently delete all data</button>
+                <button type="button" onclick="document.getElementById('resetConfirm').classList.add('hidden'); document.getElementById('resetBtn').classList.remove('hidden');" style="margin-top:6px; background:transparent; border:none; color:#6b7280; font-size:0.8rem; cursor:pointer;">Cancel</button>
+            </div>
         </div>
     </div>
 
-    <div class="main">
+    <div class="main-wrap" style="position:relative; flex:1; display:flex; flex-direction:column;">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner" aria-hidden="true"></div>
+        </div>
+        <div class="load-error hidden" id="loadError">Could not load data. Check that the server is running and try again.</div>
+        <div class="main" id="mainContent" style="display:none;">
         <div class="top-bar">
             <h1>🏢 Dashboard Overview</h1>
             <div class="filters">
@@ -166,6 +214,8 @@
                 <input type="date" id="filterStart">
                 <label>To:</label>
                 <input type="date" id="filterEnd">
+                <button type="button" class="btn-primary" style="margin:0; width:auto; padding:6px 10px; font-size:0.8rem;" onclick="exportCsv()">Export CSV</button>
+                <button type="button" class="theme-toggle" id="themeToggle" title="Toggle dark mode">Dark</button>
             </div>
         </div>
 
@@ -186,6 +236,7 @@
             <div class="card highlight">
                 <h3>Net Profit</h3>
                 <div class="value" id="kpi-net" style="color: #10b981;">0.00 GEL</div>
+                <div class="period-compare" id="periodCompare" style="font-size:0.75rem; color:#6b7280; margin-top:4px;"></div>
             </div>
         </div>
 
@@ -215,7 +266,6 @@
                 <h3 style="margin:0 0 10px 0; font-size:0.9rem; color:#6b7280;">Net Income Distribution (Pre-Tax)</h3>
                 <canvas id="aptChart"></canvas>
             </div>
-
             <div class="chart-container">
                 <h3 style="margin:0 0 10px 0; font-size:0.9rem; color:#6b7280;">Platform Performance (Income)</h3>
                 <div style="overflow-y:auto; flex:1;">
@@ -263,6 +313,27 @@
         </div>
 
         <h3>Recent Transactions</h3>
+        <p style="font-size:0.875rem; color:#6b7280; margin:-8px 0 10px 0;">Filtered by date range above.</p>
+        <div class="filters" style="margin-bottom:12px; flex-wrap:wrap;">
+            <label>Type:</label>
+            <select id="filterType" style="width:auto;">
+                <option value="">All</option>
+                <option value="Income">Income</option>
+                <option value="Expense">Expense</option>
+                <option value="Payout">Payout</option>
+            </select>
+            <label>Apartment:</label>
+            <select id="filterApt" style="width:auto;">
+                <option value="">All</option>
+                <option value="Loft2-518">518</option>
+                <option value="F2-227">227</option>
+                <option value="F2-419">419</option>
+                <option value="Shared">Shared</option>
+                <option value="Uri">Uri Payout</option>
+            </select>
+            <label>Search:</label>
+            <input type="text" id="filterSearch" placeholder="Description..." style="width:160px;">
+        </div>
         <table class="data-table">
             <thead>
                 <tr>
@@ -277,11 +348,13 @@
             </thead>
             <tbody id="tableBody"></tbody>
         </table>
+        </div>
     </div>
 
     <script>
         // --- CONFIG & STATE ---
         let allTransactions = [];
+        const CSV_FIELDS = ['id', 'date', 'apt', 'type', 'category', 'amount', 'posFee', 'myShare', 'desc', 'method', 'platform'];
         const POS_FEE = 0.024;
         const ONLINE_FEE = 0.03;
         const APARTMENTS = ['Loft2-518', 'F2-227', 'F2-419'];
@@ -302,6 +375,9 @@
 
         document.getElementById('filterStart').addEventListener('change', renderDashboard);
         document.getElementById('filterEnd').addEventListener('change', renderDashboard);
+        document.getElementById('filterType').addEventListener('change', renderDashboard);
+        document.getElementById('filterApt').addEventListener('change', renderDashboard);
+        document.getElementById('filterSearch').addEventListener('input', renderDashboard);
 
         function toggleFields() {
             const type = document.getElementById('type').value;
@@ -324,21 +400,35 @@
             return effective; // Always 100%
         }
 
+        function showToast(message, isError) {
+            const el = document.getElementById('toast');
+            el.textContent = message;
+            el.classList.toggle('error', !!isError);
+            el.classList.add('show');
+            clearTimeout(window._toastTimer);
+            window._toastTimer = setTimeout(() => el.classList.remove('show'), 2500);
+        }
+
         function loadData() {
+            const overlay = document.getElementById('loadingOverlay');
+            const mainEl = document.getElementById('mainContent');
+            const errorEl = document.getElementById('loadError');
+            overlay.classList.remove('hidden');
+            errorEl.classList.add('hidden');
+            mainEl.style.display = 'none';
+
             fetch('/load')
-            .then(response => response.json())
+            .then(response => { if (!response.ok) throw new Error('Load failed'); return response.json(); })
             .then(data => {
                 allTransactions = data.map(t => {
                     const amt = parseFloat(t.amount);
                     const fee = parseFloat(t.posFee) || 0;
-                    // For Payouts, myShare is just the negative amount
                     let correctShare = 0;
                     if(t.type === 'Payout') {
                         correctShare = -amt;
                     } else {
                         correctShare = calculateMyShare(t.type, t.apt, amt, fee);
                     }
-
                     return {
                         ...t,
                         amount: amt,
@@ -346,18 +436,25 @@
                         myShare: correctShare
                     };
                 });
+                overlay.classList.add('hidden');
+                mainEl.style.display = 'block';
                 renderDashboard();
             })
-            .catch(err => console.error("Error loading data:", err));
+            .catch(err => {
+                console.error("Error loading data:", err);
+                overlay.classList.add('hidden');
+                errorEl.classList.remove('hidden');
+            });
         }
 
         document.getElementById('transForm').addEventListener('submit', function(e) {
             e.preventDefault();
+            const amount = parseFloat(document.getElementById('amount').value);
+            document.getElementById('amountError').style.display = (amount <= 0 || isNaN(amount)) ? 'block' : 'none';
+            if (amount <= 0 || isNaN(amount)) return;
 
             const type = document.getElementById('type').value;
-            const amount = parseFloat(document.getElementById('amount').value);
             const method = document.getElementById('method').value;
-
             let apt = document.getElementById('apartment').value;
             let category = document.getElementById('category').value;
             let platform = document.getElementById('platform').value;
@@ -372,7 +469,6 @@
             } else {
                 category = type === 'Income' ? 'Rent' : category;
                 platform = type === 'Income' ? platform : '-';
-
                 if (type === 'Income') {
                     if (method === 'POS') posFee = amount * POS_FEE;
                     else if (method === 'Online') posFee = amount * ONLINE_FEE;
@@ -380,61 +476,90 @@
                 myShare = calculateMyShare(type, apt, amount, posFee);
             }
 
+            const form = this;
             const newTrans = {
-                id: Date.now(),
+                id: Date.now() + '-' + Math.random().toString(36).slice(2),
                 date: document.getElementById('date').value,
-                apt: apt,
-                type: type,
-                category: category,
-                platform: platform,
+                apt: apt, type: type, category: category, platform: platform,
                 method: type === 'Income' ? method : '-',
                 desc: document.getElementById('desc').value,
-                amount: amount,
-                posFee: posFee,
-                myShare: myShare
+                amount: amount, posFee: posFee, myShare: myShare
             };
-
             fetch('/save', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(newTrans)
-            }).then(() => {
+            }).then(res => { if (!res.ok) throw new Error('Save failed'); return res.json(); })
+            .then(() => {
                 allTransactions.push(newTrans);
                 renderDashboard();
-                this.reset();
+                form.reset();
                 document.getElementById('date').valueAsDate = new Date();
                 document.getElementById('method').value = "POS";
                 document.getElementById('platform').value = "Booking.com";
                 document.getElementById('category').value = "Cleaning";
                 toggleFields();
-            });
+                showToast('Saved');
+            })
+            .catch(() => showToast('Could not save. Check connection.', true));
         });
-
         function deleteTrans(id) {
             if(confirm("Are you sure you want to delete this transaction?")) {
                 fetch('/delete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({id: id})
-                }).then(() => {
+                }).then(res => { if (!res.ok) throw new Error('Delete failed'); return res.json(); })
+                .then(() => {
                     allTransactions = allTransactions.filter(t => t.id != id);
                     renderDashboard();
-                });
+                    showToast('Deleted');
+                })
+                .catch(() => showToast('Could not delete. Check connection.', true));
             }
         }
 
         function resetData() {
-            if(confirm("⚠️ ARE YOU SURE? This will delete ALL data permanently.")) {
-                fetch('/reset', { method: 'POST' })
-                .then(response => {
-                    if(response.ok) {
-                        allTransactions = [];
-                        renderDashboard();
-                        alert("All data has been reset.");
-                    }
-                });
+            const confirmDiv = document.getElementById('resetConfirm');
+            const resetBtn = document.getElementById('resetBtn');
+            if (confirmDiv.classList.contains('hidden')) {
+                if (allTransactions.length > 0) {
+                    const header = CSV_FIELDS.join(',');
+                    const rows = allTransactions.map(t => CSV_FIELDS.map(f => {
+                        const v = t[f];
+                        const s = v == null ? '' : String(v);
+                        return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+                    }).join(','));
+                    const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = 'backup-before-reset-' + new Date().toISOString().slice(0,10) + '.csv';
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                }
+                confirmDiv.classList.remove('hidden');
+                resetBtn.classList.add('hidden');
+                document.getElementById('resetTypeInput').value = '';
+                return;
             }
+            if (document.getElementById('resetTypeInput').value.trim() !== 'RESET') {
+                showToast('Type RESET to confirm.', true);
+                return;
+            }
+            fetch('/reset', { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    allTransactions = [];
+                    confirmDiv.classList.add('hidden');
+                    resetBtn.classList.remove('hidden');
+                    document.getElementById('resetTypeInput').value = '';
+                    renderDashboard();
+                    showToast('All data has been reset.');
+                }
+            })
+            .catch(() => showToast('Could not reset. Check connection.', true));
         }
+        document.getElementById('resetConfirmBtn').addEventListener('click', resetData);
 
         function calculateUriStats(transList) {
             let stats = {
@@ -559,6 +684,24 @@
             document.getElementById('kpi-tax').innerText = `${formatMoney(totalTax)}`;
             document.getElementById('kpi-net').innerText = `${formatMoney(totalNet)}`;
 
+            // Period comparison (previous period of same length)
+            const daysDiff = Math.round((end - start) / (1000 * 60 * 60 * 24));
+            const prevEnd = new Date(start);
+            prevEnd.setDate(prevEnd.getDate() - 1);
+            const prevStart = new Date(prevEnd);
+            prevStart.setDate(prevStart.getDate() - daysDiff);
+            let prevNet = 0;
+            allTransactions.filter(t => {
+                const tDate = new Date(t.date);
+                return tDate >= prevStart && tDate <= prevEnd;
+            }).forEach(t => {
+                if (t.type === 'Payout') return;
+                if (t.type === 'Income') prevNet += t.myShare;
+                if (t.type === 'Expense') prevNet += t.myShare;
+            });
+            const compareEl = document.getElementById('periodCompare');
+            compareEl.textContent = daysDiff > 0 ? `Previous period (${daysDiff} days): ${formatMoney(prevNet)}` : '';
+
             document.getElementById('net-518').innerText = `${formatMoney(aptNet['Loft2-518'])}`;
             document.getElementById('net-227').innerText = `${formatMoney(aptNet['F2-227'])}`;
             document.getElementById('net-419').innerText = `${formatMoney(aptNet['F2-419'])}`;
@@ -619,17 +762,14 @@
 
             CATEGORIES.forEach(c => {
                 const r = expenseMatrix[c];
-                const total = r['Loft2-518'] + r['F2-227'] + r['F2-419'];
-                if(total > 0.01) {
-                    eMatrixBody.innerHTML += `
-                        <tr class="matrix-row">
-                            <td>${c}</td>
-                            <td>${formatCompact(r['Loft2-518'])}</td>
-                            <td>${formatCompact(r['F2-227'])}</td>
-                            <td>${formatCompact(r['F2-419'])}</td>
-                        </tr>
-                    `;
-                }
+                eMatrixBody.innerHTML += `
+                    <tr class="matrix-row">
+                        <td>${c}</td>
+                        <td>${formatCompact(r['Loft2-518'])}</td>
+                        <td>${formatCompact(r['F2-227'])}</td>
+                        <td>${formatCompact(r['F2-419'])}</td>
+                    </tr>
+                `;
             });
 
             // RENDER URI TABLE (Dual View)
@@ -662,29 +802,36 @@
                 </tr>
             `;
 
-            // Render Transaction Table
+            // Render Transaction Table (with type/apt/search filters)
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             const sorted = [...filtered].sort((a, b) => new Date(b.date) - new Date(a.date));
-            sorted.forEach(t => {
+            const filterTypeVal = document.getElementById('filterType').value;
+            const filterAptVal = document.getElementById('filterApt').value;
+            const filterSearchVal = (document.getElementById('filterSearch').value || '').trim().toLowerCase();
+            const tableList = sorted.filter(t => {
+                if (filterTypeVal && t.type !== filterTypeVal) return false;
+                if (filterAptVal && t.apt !== filterAptVal) return false;
+                if (filterSearchVal && !((t.desc || '') + (t.category || '')).toLowerCase().includes(filterSearchVal)) return false;
+                return true;
+            });
+            tableList.forEach(t => {
                 let aptDisplay = t.apt;
                 let color = getAptColor(t.apt);
-
                 if(t.type === 'Payout') {
                     aptDisplay = 'Uri Payout';
                     color = '#f59e0b';
                 } else if (t.apt === 'Shared') {
                     color = '#6b7280';
                 }
-
                 const row = `<tr>
                     <td>${t.date}</td>
-                    <td><span style="background:${color}; color:${t.apt==='Shared'?'white':'white'}; padding:2px 6px; border-radius:4px; font-size:0.8rem">${aptDisplay}</span></td>
+                    <td><span style="background:${color}; color:white; padding:2px 6px; border-radius:4px; font-size:0.8rem">${aptDisplay}</span></td>
                     <td>${t.type}</td>
                     <td>${t.desc || t.category} <small style="color:#6b7280">(${t.platform})</small></td>
                     <td>${t.type === 'Expense' || t.type === 'Payout' ? '-' : ''}${formatMoney(t.amount)}</td>
                     <td style="font-weight:bold; color:${t.myShare >= 0 ? '#10b981' : '#ef4444'}">${t.type==='Payout' ? '-' : formatMoney(t.myShare)}</td>
-                    <td><button class="delete-btn" onclick="deleteTrans(${t.id})">Delete</button></td>
+                    <td><button type="button" class="delete-btn" onclick="deleteTrans(this.getAttribute('data-del-id'))" data-del-id="${t.id}">Delete</button></td>
                 </tr>`;
                 tbody.innerHTML += row;
             });
@@ -726,6 +873,55 @@
             return '#d1d5db';
         }
 
+        function getFilteredForTable() {
+            const startStr = document.getElementById('filterStart').value;
+            const endStr = document.getElementById('filterEnd').value;
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+            end.setHours(23, 59, 59);
+            let list = allTransactions.filter(t => {
+                const tDate = new Date(t.date);
+                return tDate >= start && tDate <= end;
+            });
+            const filterTypeVal = document.getElementById('filterType').value;
+            const filterAptVal = document.getElementById('filterApt').value;
+            const filterSearchVal = (document.getElementById('filterSearch').value || '').trim().toLowerCase();
+            if (filterTypeVal) list = list.filter(t => t.type === filterTypeVal);
+            if (filterAptVal) list = list.filter(t => t.apt === filterAptVal);
+            if (filterSearchVal) list = list.filter(t => ((t.desc || '') + (t.category || '')).toLowerCase().includes(filterSearchVal));
+            return list;
+        }
+
+        function exportCsv() {
+            const list = getFilteredForTable();
+            const header = CSV_FIELDS.join(',');
+            const rows = list.map(t => CSV_FIELDS.map(f => {
+                const v = t[f];
+                const s = v == null ? '' : String(v);
+                return s.includes(',') || s.includes('"') || s.includes('\n') ? '"' + s.replace(/"/g, '""') + '"' : s;
+            }).join(','));
+            const csv = [header, ...rows].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'transactions-' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        (function() {
+            const dark = localStorage.getItem('dashboard-dark') === '1';
+            if (dark) document.body.classList.add('dark');
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
+                btn.addEventListener('click', function() {
+                    document.body.classList.toggle('dark');
+                    localStorage.setItem('dashboard-dark', document.body.classList.contains('dark') ? '1' : '0');
+                    btn.textContent = document.body.classList.contains('dark') ? 'Light' : 'Dark';
+                });
+            }
+        })();
         toggleFields();
         loadData();
     </script>
