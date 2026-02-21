@@ -236,7 +236,6 @@
             <div class="card highlight">
                 <h3>Net Profit</h3>
                 <div class="value" id="kpi-net" style="color: #10b981;">0.00 GEL</div>
-                <div class="period-compare" id="periodCompare" style="font-size:0.75rem; color:#6b7280; margin-top:4px;"></div>
             </div>
         </div>
 
@@ -683,24 +682,6 @@
             document.getElementById('kpi-expense').innerText = `${formatMoney(totalExp)}`;
             document.getElementById('kpi-tax').innerText = `${formatMoney(totalTax)}`;
             document.getElementById('kpi-net').innerText = `${formatMoney(totalNet)}`;
-
-            // Period comparison (previous period of same length)
-            const daysDiff = Math.round((end - start) / (1000 * 60 * 60 * 24));
-            const prevEnd = new Date(start);
-            prevEnd.setDate(prevEnd.getDate() - 1);
-            const prevStart = new Date(prevEnd);
-            prevStart.setDate(prevStart.getDate() - daysDiff);
-            let prevNet = 0;
-            allTransactions.filter(t => {
-                const tDate = new Date(t.date);
-                return tDate >= prevStart && tDate <= prevEnd;
-            }).forEach(t => {
-                if (t.type === 'Payout') return;
-                if (t.type === 'Income') prevNet += t.myShare;
-                if (t.type === 'Expense') prevNet += t.myShare;
-            });
-            const compareEl = document.getElementById('periodCompare');
-            compareEl.textContent = daysDiff > 0 ? `Previous period (${daysDiff} days): ${formatMoney(prevNet)}` : '';
 
             document.getElementById('net-518').innerText = `${formatMoney(aptNet['Loft2-518'])}`;
             document.getElementById('net-227').innerText = `${formatMoney(aptNet['F2-227'])}`;
