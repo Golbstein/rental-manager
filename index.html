@@ -166,7 +166,6 @@
                 <input type="date" id="filterStart">
                 <label>To:</label>
                 <input type="date" id="filterEnd">
-                <button class="btn-primary" style="margin:0; width:auto; padding:8px 15px;" onclick="renderDashboard()">Apply Filter</button>
             </div>
         </div>
 
@@ -293,13 +292,16 @@
             'Internet', 'Repair', 'Other'
         ];
 
-        // Init Dates
+        // Init Dates (default range: 30 Nov previous year → today)
         const today = new Date();
-        const firstDay = new Date(today.getFullYear(), 0, 1);
+        const firstDay = new Date(today.getFullYear() - 1, 10, 30); // 30 Nov previous year
 
         document.getElementById('date').valueAsDate = today;
         document.getElementById('filterStart').valueAsDate = firstDay;
         document.getElementById('filterEnd').valueAsDate = today;
+
+        document.getElementById('filterStart').addEventListener('change', renderDashboard);
+        document.getElementById('filterEnd').addEventListener('change', renderDashboard);
 
         function toggleFields() {
             const type = document.getElementById('type').value;
