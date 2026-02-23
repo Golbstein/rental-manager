@@ -96,7 +96,7 @@
         }
         @media (max-width: 600px) {
             .kpi-row { grid-template-columns: 1fr; }
-            .kpi-row[style*="repeat(3)"] { grid-template-columns: 1fr; }
+            .kpi-row[style*="repeat(3)"], .kpi-row[style*="repeat(4)"] { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -132,7 +132,8 @@
                         <option value="Loft2-518">Loft2-518</option>
                         <option value="F2-227">F2-227</option>
                         <option value="F2-419">F2-419</option>
-                        <option value="Shared">Shared (All 3)</option>
+                        <option value="Loft2-419">Loft2-419</option>
+                        <option value="Shared">Shared (All 4)</option>
                     </select>
                 </div>
             </div>
@@ -239,23 +240,29 @@
             </div>
         </div>
 
-        <div class="kpi-row" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="kpi-row" style="grid-template-columns: repeat(4, 1fr);">
             <div class="card">
-                <div class="apt-tag">518</div>
+                <div class="apt-tag">L518</div>
                 <h3>Loft2-518 Net</h3>
                 <div class="value" id="net-518" style="color:#2563eb">0.00 GEL</div>
                 <div style="font-size:0.75rem; color:#6b7280;">(Pre-Tax)</div>
             </div>
             <div class="card">
-                <div class="apt-tag">227</div>
+                <div class="apt-tag">F227</div>
                 <h3>F2-227 Net</h3>
                 <div class="value" id="net-227" style="color:#8b5cf6">0.00 GEL</div>
                 <div style="font-size:0.75rem; color:#6b7280;">(Pre-Tax)</div>
             </div>
             <div class="card">
-                <div class="apt-tag">419</div>
+                <div class="apt-tag">F419</div>
                 <h3>F2-419 Net</h3>
                 <div class="value" id="net-419" style="color:#ec4899">0.00 GEL</div>
+                <div style="font-size:0.75rem; color:#6b7280;">(Pre-Tax)</div>
+            </div>
+            <div class="card">
+                <div class="apt-tag">L419</div>
+                <h3>Loft2-419 Net</h3>
+                <div class="value" id="net-loft419" style="color:#f59e0b">0.00 GEL</div>
                 <div style="font-size:0.75rem; color:#6b7280;">(Pre-Tax)</div>
             </div>
         </div>
@@ -275,6 +282,7 @@
                                 <th>518</th>
                                 <th>227</th>
                                 <th>419</th>
+                                <th>Loft419</th>
                             </tr>
                         </thead>
                         <tbody id="matrixBody"></tbody>
@@ -303,6 +311,7 @@
                                 <th>518</th>
                                 <th>227</th>
                                 <th>419</th>
+                                <th>Loft419</th>
                             </tr>
                         </thead>
                         <tbody id="expenseMatrixBody"></tbody>
@@ -324,9 +333,10 @@
             <label>Apartment:</label>
             <select id="filterApt" style="width:auto;">
                 <option value="">All</option>
-                <option value="Loft2-518">518</option>
-                <option value="F2-227">227</option>
-                <option value="F2-419">419</option>
+                <option value="Loft2-518">Loft2-518</option>
+                <option value="F2-227">F2-227</option>
+                <option value="F2-419">F2-419</option>
+                <option value="Loft2-419">Loft-419</option>
                 <option value="Shared">Shared</option>
                 <option value="Uri">Uri Payout</option>
             </select>
@@ -356,7 +366,9 @@
         const CSV_FIELDS = ['id', 'date', 'apt', 'type', 'category', 'amount', 'posFee', 'myShare', 'desc', 'method', 'platform'];
         const POS_FEE = 0.024;
         const ONLINE_FEE = 0.03;
-        const APARTMENTS = ['Loft2-518', 'F2-227', 'F2-419'];
+        const APARTMENTS = ['Loft2-518', 'F2-227', 'F2-419', 'Loft2-419'];
+        /** Loft2-419 is new: shared expenses before this date are split among the other 3 apartments only. */
+        const LOFT2_419_START = '2026-02-23';
         const PLATFORMS = ['Booking.com', 'Airbnb', 'Direct', 'Website'];
         const CATEGORIES = [
             'Cleaning', 'Accountant', 'POS Terminal fee', 'Tax',
@@ -393,6 +405,14 @@
                 document.getElementById('apartment').value = 'Shared';
             }
         });
+
+        /** Number of apartments to split shared expenses for a given date (Loft2-419 excluded before LOFT2_419_START). */
+        function sharedSplitCount(dateStr) {
+            return dateStr >= LOFT2_419_START ? 4 : 3;
+        }
+        function includeLoft419InShared(dateStr) {
+            return dateStr >= LOFT2_419_START;
+        }
 
         function calculateMyShare(type, apt, amount, posFee) {
             let effective = type === 'Income' ? (amount - posFee) : -amount;
@@ -564,34 +584,32 @@
             let stats = {
                 net227: 0,
                 net419: 0,
+                netLoft419: 0,
                 tax: 0,
                 payouts: 0
             };
 
             transList.forEach(t => {
-                // 1. Calculate Net for 227 & 419 (Income - Expenses + SharedExpenses)
+                // 1. Calculate Net for 227, 419, Loft2-419 (Uri gets 50% of each)
                 if (t.type === 'Income' || t.type === 'Expense') {
-                    // Check Apartment
                     if (t.apt === 'F2-227') stats.net227 += t.myShare;
                     if (t.apt === 'F2-419') stats.net419 += t.myShare;
+                    if (t.apt === 'Loft2-419') stats.netLoft419 += t.myShare;
 
-                    // Handle Shared Expenses split
                     if (t.apt === 'Shared' && t.type === 'Expense') {
-                        // Tax is handled separately below
                         if (t.category !== 'Tax') {
-                            const split = t.myShare / 3;
+                            const n = sharedSplitCount(t.date);
+                            const split = t.myShare / n;
                             stats.net227 += split;
                             stats.net419 += split;
+                            if (includeLoft419InShared(t.date)) stats.netLoft419 += split;
                         }
                     }
                 }
 
-                // 2. Accumulate Tax
                 if (t.type === 'Expense' && t.category === 'Tax') {
                     stats.tax += t.amount;
                 }
-
-                // 3. Accumulate Payouts
                 if (t.type === 'Payout') {
                     stats.payouts += t.amount;
                 }
@@ -613,16 +631,16 @@
 
             // Stats
             let totalGross = 0, totalExp = 0, totalTax = 0, totalNet = 0;
-            let aptNet = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0 };
+            let aptNet = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0, 'Loft2-419': 0 };
 
             let incomeMatrix = {};
             PLATFORMS.forEach(p => {
-                incomeMatrix[p] = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0 };
+                incomeMatrix[p] = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0, 'Loft2-419': 0 };
             });
 
             let expenseMatrix = {};
             CATEGORIES.forEach(c => {
-                expenseMatrix[c] = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0 };
+                expenseMatrix[c] = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0, 'Loft2-419': 0 };
             });
 
             filtered.forEach(t => {
@@ -646,11 +664,13 @@
                 if (t.type === 'Expense') {
                     // Update Expense Matrix
                     if (t.apt === 'Shared') {
-                        const split = Math.abs(t.myShare) / 3;
+                        const n = sharedSplitCount(t.date);
+                        const split = Math.abs(t.myShare) / n;
                         if(expenseMatrix[t.category]) {
                             expenseMatrix[t.category]['Loft2-518'] += split;
                             expenseMatrix[t.category]['F2-227'] += split;
                             expenseMatrix[t.category]['F2-419'] += split;
+                            if (includeLoft419InShared(t.date)) expenseMatrix[t.category]['Loft2-419'] += split;
                         }
                     } else {
                         if(expenseMatrix[t.category] && expenseMatrix[t.category][t.apt] !== undefined) {
@@ -666,10 +686,12 @@
                         totalNet += t.myShare;
 
                         if (t.apt === 'Shared') {
-                            const splitAmount = t.myShare / 3;
+                            const n = sharedSplitCount(t.date);
+                            const splitAmount = t.myShare / n;
                             aptNet['Loft2-518'] += splitAmount;
                             aptNet['F2-227'] += splitAmount;
                             aptNet['F2-419'] += splitAmount;
+                            if (includeLoft419InShared(t.date)) aptNet['Loft2-419'] += splitAmount;
                         } else {
                             if(aptNet[t.apt] !== undefined) aptNet[t.apt] += t.myShare;
                         }
@@ -686,17 +708,19 @@
             document.getElementById('net-518').innerText = `${formatMoney(aptNet['Loft2-518'])}`;
             document.getElementById('net-227').innerText = `${formatMoney(aptNet['F2-227'])}`;
             document.getElementById('net-419').innerText = `${formatMoney(aptNet['F2-419'])}`;
+            document.getElementById('net-loft419').innerText = `${formatMoney(aptNet['Loft2-419'])}`;
 
             // Render Income Matrix
             const iMatrixBody = document.getElementById('matrixBody');
             iMatrixBody.innerHTML = '';
 
             // Total Row
-            let iTotals = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0 };
+            let iTotals = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0, 'Loft2-419': 0 };
             PLATFORMS.forEach(p => {
                 iTotals['Loft2-518'] += incomeMatrix[p]['Loft2-518'];
                 iTotals['F2-227'] += incomeMatrix[p]['F2-227'];
                 iTotals['F2-419'] += incomeMatrix[p]['F2-419'];
+                iTotals['Loft2-419'] += incomeMatrix[p]['Loft2-419'];
             });
 
             iMatrixBody.innerHTML += `
@@ -705,6 +729,7 @@
                     <td>${formatCompact(iTotals['Loft2-518'])}</td>
                     <td>${formatCompact(iTotals['F2-227'])}</td>
                     <td>${formatCompact(iTotals['F2-419'])}</td>
+                    <td>${formatCompact(iTotals['Loft2-419'])}</td>
                 </tr>
             `;
 
@@ -716,6 +741,7 @@
                         <td>${formatCompact(r['Loft2-518'])}</td>
                         <td>${formatCompact(r['F2-227'])}</td>
                         <td>${formatCompact(r['F2-419'])}</td>
+                        <td>${formatCompact(r['Loft2-419'])}</td>
                     </tr>
                 `;
             });
@@ -725,11 +751,12 @@
             eMatrixBody.innerHTML = '';
 
             // Total Row
-            let eTotals = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0 };
+            let eTotals = { 'Loft2-518': 0, 'F2-227': 0, 'F2-419': 0, 'Loft2-419': 0 };
             CATEGORIES.forEach(c => {
                 eTotals['Loft2-518'] += expenseMatrix[c]['Loft2-518'];
                 eTotals['F2-227'] += expenseMatrix[c]['F2-227'];
                 eTotals['F2-419'] += expenseMatrix[c]['F2-419'];
+                eTotals['Loft2-419'] += expenseMatrix[c]['Loft2-419'];
             });
 
             eMatrixBody.innerHTML += `
@@ -738,6 +765,7 @@
                     <td>${formatCompact(eTotals['Loft2-518'])}</td>
                     <td>${formatCompact(eTotals['F2-227'])}</td>
                     <td>${formatCompact(eTotals['F2-419'])}</td>
+                    <td>${formatCompact(eTotals['Loft2-419'])}</td>
                 </tr>
             `;
 
@@ -749,6 +777,7 @@
                         <td>${formatCompact(r['Loft2-518'])}</td>
                         <td>${formatCompact(r['F2-227'])}</td>
                         <td>${formatCompact(r['F2-419'])}</td>
+                        <td>${formatCompact(r['Loft2-419'])}</td>
                     </tr>
                 `;
             });
@@ -758,12 +787,12 @@
 
             // Current Period
             const curStats = calculateUriStats(filtered);
-            const curShare = (curStats.net227 * 0.5) + (curStats.net419 * 0.5) - (curStats.tax / 3);
+            const curShare = (curStats.net227 * 0.5) + (curStats.net419 * 0.5) + (curStats.netLoft419 * 0.5) - (curStats.tax / 4);
             const curBalance = curShare - curStats.payouts;
 
             // All Time
             const allStats = calculateUriStats(allTransactions);
-            const allShare = (allStats.net227 * 0.5) + (allStats.net419 * 0.5) - (allStats.tax / 3);
+            const allShare = (allStats.net227 * 0.5) + (allStats.net419 * 0.5) + (allStats.netLoft419 * 0.5) - (allStats.tax / 4);
             const allBalance = allShare - allStats.payouts;
 
             uriBody.innerHTML = `
@@ -840,7 +869,7 @@
                     datasets: [{
                         label: 'Net Income (Per Apartment)',
                         data: Object.values(data),
-                        backgroundColor: ['#2563eb', '#8b5cf6', '#ec4899']
+                        backgroundColor: ['#2563eb', '#8b5cf6', '#ec4899', '#f59e0b']
                     }]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
@@ -851,6 +880,7 @@
             if(apt === 'Loft2-518') return '#2563eb';
             if(apt === 'F2-227') return '#8b5cf6';
             if(apt === 'F2-419') return '#ec4899';
+            if(apt === 'Loft2-419') return '#f59e0b';
             return '#d1d5db';
         }
 

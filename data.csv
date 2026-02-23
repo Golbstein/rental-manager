@@ -67,7 +67,6 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1770498435404,2026-02-09,F2-227,Income,Rent,2049.16,49.17984,1999.9801599999998,6831553744,POS,Booking.com
 1770498505358,2026-02-28,F2-227,Income,Rent,3271.87,78.52488,3193.34512,5012038668,POS,Booking.com
 1770498573747,2026-02-14,F2-419,Income,Rent,1823.9,43.7736,1780.1264,5616361296,POS,Booking.com
-1770498704185,2026-01-01,Uri,Payout,Payout,6000,0,-6000,,-,-
 1770498757780,2025-02-07,Uri,Payout,Payout,80,0,-80,,-,-
 1771661812960,2026-02-09,F2-227,Expense,Cleaning,100,0,-100,,-,-
 1771661834080,2026-02-14,F2-419,Expense,Cleaning,70,0,-70,,-,-
@@ -99,3 +98,9 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1771667463358-ezxdrdegz8,2026-03-08,Uri,Payout,Payout,52,0,-52,60 ils,-,-
 1771667565141-a4id4gttmob,2026-03-18,F2-419,Income,Rent,1030,0,1030,1200 ils,Bank,Direct
 1771667575337-wafcra7k3re,2026-03-18,Uri,Payout,Payout,515,0,-515,600 ils,-,-
+1771671061728-fhowldoisi,2026-02-22,Loft2-518,Expense,Cleaning,70,0,-70,,-,-
+1771830328937-vn0s5hdrq7r,2026-03-16,Loft2-518,Income,Rent,138,4.14,133.86,extra person,Online,Direct
+1771866324017-bp8ghtjdy7,2026-02-23,Loft2-419,Expense,Other,1000,0,-1000,bed linen,-,-
+1771866358202-ufa0i7jc67,2026-01-01,Uri,Payout,Payout,5500,0,-5500,,-,-
+1771882050316-ustq9p7ey2,2026-02-23,Loft2-419,Income,Rent,1028,0,1028,1200 nis,Bank,Direct
+1771882078787-m1rz2ujezd,2026-02-23,Uri,Payout,Payout,514,0,-514,600 ils,-,-
