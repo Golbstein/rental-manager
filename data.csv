@@ -104,3 +104,8 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1771866358202-ufa0i7jc67,2026-01-01,Uri,Payout,Payout,5500,0,-5500,,-,-
 1771882050316-ustq9p7ey2,2026-02-23,Loft2-419,Income,Rent,1028,0,1028,1200 nis,Bank,Direct
 1771882078787-m1rz2ujezd,2026-02-23,Uri,Payout,Payout,514,0,-514,600 ils,-,-
+1771922900847-jjvn69mrn9c,2026-02-27,F2-419,Income,Rent,400,0,400,,Bank,Direct
+1771926016087-do9h3gfbuwf,2026-02-24,Loft2-518,Expense,Cleaning,70,0,-70,,-,-
+1771945407077-c1tcki194ow,2026-02-24,Loft2-419,Expense,Other,2675.1,0,-2675.1,ski locker,-,-
+1771955252069-nkiddrkggwo,2026-02-24,Loft2-419,Expense,Other,539.1,0,-539.1,towels,-,-
+1771955270534-zu7nkrmabx,2026-03-01,Loft2-419,Income,Rent,500,0,500,,Bank,Direct
