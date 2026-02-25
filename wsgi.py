@@ -5,7 +5,7 @@ import sys
 import os
 
 # Add your project directory to the Python path
-project_home = '/home/YOUR_USERNAME/rental-manager'
+project_home = '/Users/jenia/Desktop/rental-manager'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 

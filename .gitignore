@@ -1,0 +1,17 @@
+# Python
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+.Python
+*.so
+.eggs/
+*.egg-info/
+*.egg
+
+# Environment
+.env
+.env.local
+
+# Data (optional - uncomment if data.csv should stay local)
+# data.csv
