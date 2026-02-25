@@ -76,6 +76,19 @@
         #toast.error { background: #dc2626; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .hidden { display: none !important; }
+        .viewer-banner { background: #fef3c7; color: #92400e; padding: 12px; border-radius: 6px; font-size: 0.875rem; margin-bottom: 15px; }
+        body.dark .viewer-banner { background: #451a03; color: #fcd34d; }
+        .auth-btn { background: #6b7280; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; margin-top: 8px; }
+        .auth-btn:hover { background: #4b5563; }
+        .auth-btn.admin { background: #059669; }
+        .auth-btn.admin:hover { background: #047857; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
+        .modal-overlay.hidden { display: none !important; }
+        .modal { background: var(--card); padding: 24px; border-radius: 8px; max-width: 320px; width: 90%; }
+        .modal h3 { margin: 0 0 12px 0; font-size: 1rem; }
+        .modal input { margin-bottom: 12px; }
+        body.viewer-mode .data-table th:nth-last-child(1),
+        body.viewer-mode .data-table td:nth-last-child(1) { display: none; }
         body.dark { --primary: #3b82f6; --bg: #111827; --card: #1f2937; --text: #f3f4f6; }
         body.dark .sidebar { border-right-color: #374151; }
         body.dark .card { box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
@@ -110,7 +123,13 @@
         </div>
         <h2>SkiLuxe New Gudauri</h2>
 
-        <form id="transForm" style="margin-top: 20px;">
+        <div id="viewerSection" class="hidden" style="margin-top: 20px;">
+            <div class="viewer-banner">👁️ View only — you can browse data but cannot add, edit, or delete.</div>
+            <button type="button" class="auth-btn" id="unlockBtn">Unlock admin</button>
+        </div>
+
+        <div id="adminSection" style="margin-top: 20px;">
+        <form id="transForm">
             <div class="form-group">
                 <label>Date</label>
                 <input type="date" id="date" required>
@@ -199,6 +218,20 @@
                 <button type="button" class="btn-danger" id="resetConfirmBtn" style="margin-top:0;">Permanently delete all data</button>
                 <button type="button" onclick="document.getElementById('resetConfirm').classList.add('hidden'); document.getElementById('resetBtn').classList.remove('hidden');" style="margin-top:6px; background:transparent; border:none; color:#6b7280; font-size:0.8rem; cursor:pointer;">Cancel</button>
             </div>
+            <button type="button" class="auth-btn admin" id="lockBtn" style="margin-top:15px;">Lock (viewer mode)</button>
+        </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal-overlay hidden">
+        <div class="modal">
+            <h3>Admin password</h3>
+            <input type="password" id="adminPassword" placeholder="Enter password" autocomplete="current-password">
+            <div style="display:flex; gap:8px;">
+                <button type="button" class="btn-primary" style="margin:0; width:auto;" id="loginSubmit">Unlock</button>
+                <button type="button" class="auth-btn" onclick="closeLoginModal()">Cancel</button>
+            </div>
+            <p id="loginError" style="color:#dc2626; font-size:0.8rem; margin:8px 0 0 0; display:none;"></p>
         </div>
     </div>
 
@@ -363,6 +396,7 @@
     <script>
         // --- CONFIG & STATE ---
         let allTransactions = [];
+        let isAdmin = false;
         const CSV_FIELDS = ['id', 'date', 'apt', 'type', 'category', 'amount', 'posFee', 'myShare', 'desc', 'method', 'platform'];
         const POS_FEE = 0.024;
         const ONLINE_FEE = 0.03;
@@ -389,6 +423,62 @@
         document.getElementById('filterType').addEventListener('change', renderDashboard);
         document.getElementById('filterApt').addEventListener('change', renderDashboard);
         document.getElementById('filterSearch').addEventListener('input', renderDashboard);
+
+        function applyAuthUI() {
+            document.getElementById('adminSection').classList.toggle('hidden', !isAdmin);
+            document.getElementById('viewerSection').classList.toggle('hidden', isAdmin);
+            document.body.classList.toggle('viewer-mode', !isAdmin);
+        }
+
+        function checkAuth() {
+            return fetch('/auth/check', { credentials: 'include' })
+                .then(r => r.json())
+                .then(data => { isAdmin = !!data.admin; applyAuthUI(); })
+                .catch(() => { isAdmin = false; applyAuthUI(); });
+        }
+
+        document.getElementById('unlockBtn').addEventListener('click', function() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('adminPassword').focus();
+        });
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+        }
+
+        document.getElementById('loginSubmit').addEventListener('click', function() {
+            const pwd = document.getElementById('adminPassword').value;
+            const errEl = document.getElementById('loginError');
+            fetch('/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ password: pwd })
+            }).then(r => r.json().then(data => ({ ok: r.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.admin) {
+                    closeLoginModal();
+                    isAdmin = true;
+                    applyAuthUI();
+                    renderDashboard();
+                    showToast('Admin access granted');
+                } else {
+                    errEl.textContent = data.error || 'Invalid password';
+                    errEl.style.display = 'block';
+                }
+            }).catch(() => { errEl.textContent = 'Connection error'; errEl.style.display = 'block'; });
+        });
+
+        document.getElementById('adminPassword').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') document.getElementById('loginSubmit').click();
+        });
+
+        document.getElementById('lockBtn').addEventListener('click', function() {
+            fetch('/logout', { method: 'POST', credentials: 'include' })
+                .then(() => { isAdmin = false; applyAuthUI(); renderDashboard(); showToast('Switched to viewer mode'); });
+        });
 
         function toggleFields() {
             const type = document.getElementById('type').value;
@@ -436,7 +526,7 @@
             errorEl.classList.add('hidden');
             mainEl.style.display = 'none';
 
-            fetch('/load')
+            fetch('/load', { credentials: 'include' })
             .then(response => { if (!response.ok) throw new Error('Load failed'); return response.json(); })
             .then(data => {
                 allTransactions = data.map(t => {
@@ -507,8 +597,9 @@
             fetch('/save', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
+                credentials: 'include',
                 body: JSON.stringify(newTrans)
-            }).then(res => { if (!res.ok) throw new Error('Save failed'); return res.json(); })
+            }).then(res => { if (res.status === 403) throw new Error('admin'); if (!res.ok) throw new Error('Save failed'); return res.json(); })
             .then(() => {
                 allTransactions.push(newTrans);
                 renderDashboard();
@@ -520,21 +611,22 @@
                 toggleFields();
                 showToast('Saved');
             })
-            .catch(() => showToast('Could not save. Check connection.', true));
+            .catch(e => showToast(e.message === 'admin' ? 'Admin access required' : 'Could not save. Check connection.', true));
         });
         function deleteTrans(id) {
             if(confirm("Are you sure you want to delete this transaction?")) {
                 fetch('/delete', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
+                    credentials: 'include',
                     body: JSON.stringify({id: id})
-                }).then(res => { if (!res.ok) throw new Error('Delete failed'); return res.json(); })
+                }).then(res => { if (res.status === 403) throw new Error('admin'); if (!res.ok) throw new Error('Delete failed'); return res.json(); })
                 .then(() => {
                     allTransactions = allTransactions.filter(t => t.id != id);
                     renderDashboard();
                     showToast('Deleted');
                 })
-                .catch(() => showToast('Could not delete. Check connection.', true));
+                .catch(e => showToast(e.message === 'admin' ? 'Admin access required' : 'Could not delete. Check connection.', true));
             }
         }
 
@@ -565,8 +657,9 @@
                 showToast('Type RESET to confirm.', true);
                 return;
             }
-            fetch('/reset', { method: 'POST' })
+            fetch('/reset', { method: 'POST', credentials: 'include' })
             .then(response => {
+                if (response.status === 403) { showToast('Admin access required', true); return; }
                 if (response.ok) {
                     allTransactions = [];
                     confirmDiv.classList.add('hidden');
@@ -576,7 +669,7 @@
                     showToast('All data has been reset.');
                 }
             })
-            .catch(() => showToast('Could not reset. Check connection.', true));
+            .catch(e => showToast('Could not reset. Check connection.', true));
         }
         document.getElementById('resetConfirmBtn').addEventListener('click', resetData);
 
@@ -934,7 +1027,7 @@
             }
         })();
         toggleFields();
-        loadData();
+        checkAuth().then(loadData);
     </script>
 </body>
 </html>

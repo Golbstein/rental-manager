@@ -1,15 +1,18 @@
 """
 Flask WSGI app for PythonAnywhere deployment.
 Mirrors the API from server.py for use with the existing frontend.
+Admin password protects write operations; others see read-only viewer mode.
 """
-import json
 import os
 import csv
 import shutil
 
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, session, jsonify
 
 app = Flask(__name__, static_folder='.')
+app.secret_key = os.environ.get('SECRET_KEY', 'change-me-in-production')
+# Set ADMIN_PASSWORD in PythonAnywhere: Web → WSGI file or add to /var/www/... before import
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
 # Use project directory for data file (works on PythonAnywhere)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -50,6 +53,40 @@ def migrate_csv_if_needed():
 migrate_csv_if_needed()
 
 
+def is_admin():
+    return session.get('admin') is True
+
+
+def require_admin(fn):
+    def wrapped(*args, **kwargs):
+        if not is_admin():
+            return jsonify({'error': 'Admin access required'}), 403
+        return fn(*args, **kwargs)
+    wrapped.__name__ = fn.__name__
+    return wrapped
+
+
+@app.route('/auth/check')
+def auth_check():
+    return jsonify({'admin': is_admin()})
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    password = data.get('password', '')
+    if ADMIN_PASSWORD and password == ADMIN_PASSWORD:
+        session['admin'] = True
+        return jsonify({'status': 'ok', 'admin': True})
+    return jsonify({'error': 'Invalid password'}), 401
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('admin', None)
+    return jsonify({'status': 'ok'})
+
+
 @app.route('/')
 def index():
     return send_from_directory('.', 'index.html')
@@ -73,6 +110,7 @@ def load():
 
 
 @app.route('/save', methods=['POST'])
+@require_admin
 def save():
     data = request.get_json()
     file_exists = os.path.exists(DATA_FILE)
@@ -86,6 +124,7 @@ def save():
 
 
 @app.route('/delete', methods=['POST'])
+@require_admin
 def delete():
     req = request.get_json()
     target_id = str(req['id'])
@@ -104,6 +143,7 @@ def delete():
 
 
 @app.route('/update', methods=['POST'])
+@require_admin
 def update():
     data = request.get_json()
     target_id = str(data.get('id', ''))
@@ -123,6 +163,7 @@ def update():
 
 
 @app.route('/reset', methods=['POST'])
+@require_admin
 def reset():
     with open(DATA_FILE, 'w', newline='', encoding='utf-8') as f:
         writer = csv.DictWriter(f, fieldnames=FIELDS)

@@ -67,10 +67,14 @@ if project_home not in sys.path:
 
 os.chdir(project_home)
 
+# Admin password for full access; others see read-only viewer mode
+os.environ.setdefault('ADMIN_PASSWORD', 'choose-a-strong-password')
+os.environ.setdefault('SECRET_KEY', 'change-this-to-a-random-32-char-string')
+
 from app import application
 ```
 
-Replace both instances of `YOUR_USERNAME` with your PythonAnywhere username (e.g. `jenia` → `/home/jenia/rental-manager`).
+Replace `YOUR_USERNAME` with your PythonAnywhere username. **Change** `ADMIN_PASSWORD` and `SECRET_KEY` to your own values before going live.
 
 **Important:** After setting the virtualenv path in Step 6, PythonAnywhere will automatically use it when loading the app. No need to activate it in the WSGI file.
 
@@ -91,6 +95,14 @@ Click **Reload** under your web app. Your dashboard should be live at:
 
 ---
 
+## Admin access
+
+- By default, everyone sees the dashboard in **viewer mode** (read-only).
+- To add, edit, delete, or reset data: click **Unlock admin**, enter the `ADMIN_PASSWORD` you set in the WSGI file.
+- After unlocking, click **Lock (viewer mode)** to switch back.
+
+---
+
 ## Troubleshooting
 
 | Problem | Fix |
@@ -99,6 +111,7 @@ Click **Reload** under your web app. Your dashboard should be live at:
 | Module not found | Ensure virtualenv path is set and `pip install -r requirements.txt` ran successfully |
 | Data not saving | Free tier allows writes to your home directory; `data.csv` will be in `~/rental-manager/` |
 | Logo missing | Upload `logo.png` to the project folder; the app hides it gracefully if missing |
+| Unlock not working | Ensure `ADMIN_PASSWORD` is set in the WSGI file (before `from app import application`) |
 
 ## Run locally with Flask (optional)
 
@@ -109,6 +122,14 @@ cd rental-manager
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+flask run
+```
+
+Set `ADMIN_PASSWORD` and `SECRET_KEY` env vars before running, e.g.:
+
+```bash
+export ADMIN_PASSWORD="your-password"
+export SECRET_KEY="a-random-32-char-string"
 flask run
 ```
 
