@@ -111,3 +111,15 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1771955270534-zu7nkrmabx,2026-03-01,Loft2-419,Income,Rent,500,0,500,,Bank,Direct
 1772009399113-q4mj3nq04b9,2026-02-25,F2-227,Expense,Electricity,10.75,0,-10.75,,-,-
 1772009429283-qhbln80b5xm,2026-02-25,F2-419,Expense,Electricity,8,0,-8,,-,-
+1772105113142-tm4t0uygj5r,2026-02-26,Loft2-518,Expense,Electricity,4.7,0,-4.7,,-,-
+1772105136650-oj23zmgceo8,2026-02-27,F2-227,Expense,Cleaning,100,0,-100,,-,-
+1772105151604-uo812mgwk2g,2026-02-27,F2-419,Expense,Cleaning,70,0,-70,,-,-
+1772105180360-7cgdjyp24yo,2026-02-28,F2-227,Expense,Cleaning,100,0,-100,,-,-
+1772105204366-5o9pclq5ewe,2026-02-28,F2-419,Expense,Cleaning,70,0,-70,,-,-
+1772139740684-49yv1td35e5,2026-02-26,F2-227,Expense,Other,50,0,-50,sally help,-,-
+1772139940724-6lza24xisha,2026-03-01,Loft2-419,Income,Rent,1900,0,1900,,Cash,Direct
+1772139974471-2ww7q30x3c9,2026-02-28,F2-419,Income,Rent,1024,0,1024,1200 nis,Bank,Direct
+1772140059524-wfr3jav8ebb,2026-03-01,Loft2-419,Expense,Cleaning,70,0,-70,,-,-
+1772140092207-fh19cskycz,2026-02-28,Uri,Payout,Payout,512,0,-512,600 nis,-,-
+1772140182383-jpvffj8583q,2026-03-02,Loft2-518,Income,Rent,1836,55.08,1780.92,,Online,Direct
+1772140197066-aj11rs000sf,2026-03-02,Loft2-518,Expense,Cleaning,70,0,-70,,-,-
