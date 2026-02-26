@@ -92,10 +92,10 @@ def index():
     return send_from_directory('.', 'index.html')
 
 
-@app.route('/logo.png')
+@app.route('/logo_clean.png')
 def logo():
-    path = os.path.join(BASE_DIR, 'logo.png')
-    return send_from_directory(BASE_DIR, 'logo.png') if os.path.exists(path) else ('', 404)
+    path = os.path.join(BASE_DIR, 'logo_clean.png')
+    return send_from_directory(BASE_DIR, 'logo_clean.png') if os.path.exists(path) else ('', 404)
 
 
 @app.route('/load')
