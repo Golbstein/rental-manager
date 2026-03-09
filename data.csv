@@ -94,8 +94,6 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1771666766875-4f6oqjb72,2026-03-16,Loft2-518,Income,Rent,1382,33.168,1348.832,5432343356,POS,Booking.com
 1771667331008-d9fvngslj1u,2026-03-17,F2-227,Income,Rent,222,0,222,260 ils,Bank,Direct
 1771667344908-edxewfuix3p,2026-03-17,Uri,Payout,Payout,111,0,-111,130 ils,-,-
-1771667453192-gn27zmad63,2026-03-08,F2-419,Income,Rent,104,0,104,120 ils,Bank,Direct
-1771667463358-ezxdrdegz8,2026-03-08,Uri,Payout,Payout,52,0,-52,60 ils,-,-
 1771667565141-a4id4gttmob,2026-03-18,F2-419,Income,Rent,1030,0,1030,1200 ils,Bank,Direct
 1771667575337-wafcra7k3re,2026-03-18,Uri,Payout,Payout,515,0,-515,600 ils,-,-
 1771671061728-fhowldoisi,2026-02-22,Loft2-518,Expense,Cleaning,70,0,-70,,-,-
@@ -117,9 +115,31 @@ id,date,apt,type,category,amount,posFee,myShare,desc,method,platform
 1772105180360-7cgdjyp24yo,2026-02-28,F2-227,Expense,Cleaning,100,0,-100,,-,-
 1772105204366-5o9pclq5ewe,2026-02-28,F2-419,Expense,Cleaning,70,0,-70,,-,-
 1772139740684-49yv1td35e5,2026-02-26,F2-227,Expense,Other,50,0,-50,sally help,-,-
-1772139940724-6lza24xisha,2026-03-01,Loft2-419,Income,Rent,1900,0,1900,,Cash,Direct
-1772139974471-2ww7q30x3c9,2026-02-28,F2-419,Income,Rent,1024,0,1024,1200 nis,Bank,Direct
-1772140059524-wfr3jav8ebb,2026-03-01,Loft2-419,Expense,Cleaning,70,0,-70,,-,-
-1772140092207-fh19cskycz,2026-02-28,Uri,Payout,Payout,512,0,-512,600 nis,-,-
 1772140182383-jpvffj8583q,2026-03-02,Loft2-518,Income,Rent,1836,55.08,1780.92,,Online,Direct
 1772140197066-aj11rs000sf,2026-03-02,Loft2-518,Expense,Cleaning,70,0,-70,,-,-
+1772178292738-gvixot28i67,2026-02-27,F2-419,Expense,Repair,50,0,-50,,-,-
+1772313063284-8fpz2o9w6li,2026-02-28,F2-419,Income,Rent,546.42,13.11408,533.30592,5539302904,POS,Booking.com
+1772313133741-6pm51frvhed,2026-03-01,F2-419,Income,Rent,700,0,700,Paid to sally,Cash,Booking.com
+1772313181773-iexpobqol1,2026-03-01,F2-419,Expense,Cleaning,70,0,-70,,-,-
+1772316126029-jpvy0wm5n2,2026-02-28,Loft2-419,Expense,Other,75,0,-75,Box maia,-,-
+1772395816685-ztuhstyklf,2026-03-01,Loft2-419,Expense,Cleaning,100,0,-100,,-,-
+1772538052305-8riowd9k5yn,2026-03-03,F2-419,Expense,Cleaning,70,0,-70,,-,-
+1772538111003-da6qoezg95w,2026-03-03,Loft2-419,Income,Rent,1500,0,1500,,Cash,Direct
+1772606713882-dpk6aj8y2co,2026-03-04,F2-227,Expense,Booking.com Fee,812.22,0,-812.22,,-,-
+1772606775012-n9kofx3mip8,2026-03-04,F2-419,Expense,Booking.com Fee,1333.27,0,-1333.27,,-,-
+1772606817389-feqzx4j5rpf,2026-03-04,Loft2-518,Expense,Booking.com Fee,1075.8,0,-1075.8,,-,-
+1772797919548-agfailnr8xg,2026-03-06,Loft2-419,Income,Rent,200,0,200,,Bank,Direct
+1772797930359-9cdvdlgq5a,2026-03-06,Loft2-419,Expense,Cleaning,100,0,-100,,-,-
+1772797947259-e1eux7ozlcb,2026-03-07,Loft2-419,Expense,Cleaning,100,0,-100,,-,-
+1772798052226-qcogy61qdoh,2026-03-07,Loft2-419,Income,Rent,2216.65,53.199600000000004,2163.4504,6603772222,POS,Booking.com
+1772798160201-2pz7ga3we44,2026-03-08,F2-419,Income,Rent,1628.07,39.073679999999996,1588.99632,5572516225,POS,Booking.com
+1772798245972-0uk615qhgfz,2026-03-08,F2-419,Expense,Cleaning,70,0,-70,,-,-
+1772802923177-hndrlg8tloc,2026-03-05,F2-419,Expense,Other,70,0,-70,Frame,-,-
+1772802937970-how3w1w6lr,2026-03-05,F2-227,Expense,Other,70,0,-70,Frame,-,-
+1772823459469-vf20t0bdgm,2026-03-06,Shared,Expense,POS Terminal fee,30,0,-30,,-,-
+1772823521303-3ux25d7hfzi,2026-03-06,F2-227,Expense,Other,50,0,-50,Refund,-,-
+1772901063736-rvpe8gc5ayq,2026-03-07,Loft2-419,Income,Rent,930.9,22.3416,908.5584,6603717654,POS,Booking.com
+1773043845939-vm6vkc1x0h,2026-03-09,F2-419,Expense,Other,40,0,-40,Toilet paper,-,-
+1773044003683-pfzu0h255x,2026-12-22,F2-227,Income,Rent,1432.26,34.37424,1397.88576,6369839783,POS,Booking.com
+1773044073261-438vy4oughc,2026-03-17,F2-419,Income,Rent,434.08,10.41792,423.66208,6369506802,POS,Booking.com
+1773044163849-re90s4jyk1,2026-03-10,F2-227,Expense,Cleaning,100,0,-100,,-,-
